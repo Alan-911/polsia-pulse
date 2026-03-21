@@ -1,27 +1,21 @@
 name: Daily Pulse Analyst
-
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 12 * * *' # Runs at 12:00 UTC (8:00 AM EST) every day
-  workflow_dispatch: # Allows you to run it manually for testing
+    - cron: '0 12 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4  # Updated to v4 to fix the warning
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Updated to v5 to fix the warning
         with:
           python-version: '3.10'
-
       - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run AI Analyst
+        run: pip install requests google-generativeai
+      - name: Run Analyst
         env:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
