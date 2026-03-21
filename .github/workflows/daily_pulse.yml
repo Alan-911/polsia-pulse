@@ -1,4 +1,5 @@
 name: Daily Pulse Analyst
+
 on:
   workflow_dispatch:
   schedule:
@@ -8,18 +9,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # Updated to v4 to fix the warning
+      - uses: actions/checkout@v4
+      
       - name: Set up Python
-        uses: actions/setup-python@v5 # Updated to v5 to fix the warning
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          
       - name: Install Dependencies
         run: pip install requests google-generativeai
+        
       - name: Run Analyst
         env:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BEEHIIV_API_KEY: ${{ secrets.BEEHIIV_API_KEY }}
           BEEHIIV_PUB_ID: ${{ secrets.BEEHIIV_PUB_ID }}
-        run: python main.pyD }}
         run: python main.py
+        
