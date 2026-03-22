@@ -1,31 +1,28 @@
 import os
-from google.genai import Client  # Updated 2026 Import Path
+import google.generativeai as genai
+
+# 1. Setup the connection
+# Make sure your GitHub Secret is named GEMINI_API_KEY
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_market_pulse():
-    # 1. Initialize the Gemini Client
-    try:
-        # The SDK will automatically try to find your 'GEMINI_API_KEY'
-        client = Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    except Exception as e:
-        print(f"Auth Error: {e}")
-        return
+    # 2. Choose the 2026 stable model
+    # (gemini-2.5-flash is the current free-tier workhorse)
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
-    # 2. Define your prompt
-    prompt = "Analyze today's financial news for Gold and the S&P 500. Provide 3 witty bullet points."
+    prompt = """
+    Analyze today's top financial news for Gold and the S&P 500. 
+    Provide a concise, 3-bullet point summary for a newsletter.
+    Tone: Professional and witty.
+    """
 
-    # 3. Generate content
+    # 3. Generate and Print
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", 
-            contents=prompt
-        )
-        
+        response = model.generate_content(prompt)
         print("--- DAILY MARKET PULSE ---")
         print(response.text)
-        return response.text
-
     except Exception as e:
-        print(f"AI Generation Error: {e}")
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
     get_market_pulse()
