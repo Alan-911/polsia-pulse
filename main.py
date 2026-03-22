@@ -1,38 +1,31 @@
 import os
-from google import genai
+from google import genai  # Correct import for 2026 SDK
 
 def get_market_pulse():
     # 1. Initialize the Gemini Client
-    # It will automatically look for 'GEMINI_API_KEY' in your GitHub Secrets
     try:
+        # The new SDK looks for 'GOOGLE_API_KEY' or you can pass it manually
         client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    except KeyError:
-        print("Error: GEMINI_API_KEY not found in environment variables.")
+    except Exception as e:
+        print(f"Auth Error: {e}")
         return
 
-    # 2. Define your prompt (The instructions for the AI)
-    prompt = """
-    You are a professional Market Analyst for 'The Pulse'. 
-    Analyze today's top financial news specifically focusing on Gold, Oil, and the S&P 500.
-    Provide a concise, 3-bullet point summary that is ready for a newsletter.
-    Tone: Professional, witty, and data-driven.
-    """
+    # 2. Define your prompt
+    prompt = "Analyze today's top financial news for Gold and the S&P 500. Provide 3 witty bullet points."
 
-    # 3. Generate the content using the 2026 Free Workhorse Model
+    # 3. Generate using the stable 2026 model
     try:
         response = client.models.generate_content(
-            model="gemini-3.1-flash-lite-preview",
+            model="gemini-2.5-flash", 
             contents=prompt
         )
         
-        # 4. Print the result (This shows up in your GitHub Action logs)
         print("--- DAILY MARKET PULSE ---")
         print(response.text)
         return response.text
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"AI Generation Error: {e}")
 
 if __name__ == "__main__":
     get_market_pulse()
-
