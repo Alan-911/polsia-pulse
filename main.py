@@ -1,58 +1,38 @@
-import requests
-import google.generativeai as genai
-
-# Setup your keys here
-NEWS_API_KEY = "YOUR_NEWS_API_KEY"
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-genai.configure(api_key=GEMINI_API_KEY)
+import os
+from google import genai
 
 def get_market_pulse():
-    # 1. Fetch live news about Gold and Macro economics
-    url = f"https://newsapi.org/v2/everything?q=gold market OR inflation&sortBy=publishedAt&apiKey={NEWS_API_KEY}"
-    articles = requests.get(url).json().get('articles', [])[:5]
-    
-    context = "\n".join([f"- {a['title']}: {a['description']}" for a in articles])
-    
-    # 2. Use Gemini to analyze and write the "Pulse"
-    model = genai.GenerativeModel('gemini-3.1-flash-lite')
-    prompt = f"Analyze these news items for a gold investor. Write a 3-bullet executive summary (Trend, Risk, Action): \n\n{context}"
-    
-    report = model.generate_content(prompt)
-    return report.text
+    # 1. Initialize the Gemini Client
+    # It will automatically look for 'GEMINI_API_KEY' in your GitHub Secrets
+    try:
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    except KeyError:
+        print("Error: GEMINI_API_KEY not found in environment variables.")
+        return
+
+    # 2. Define your prompt (The instructions for the AI)
+    prompt = """
+    You are a professional Market Analyst for 'The Pulse'. 
+    Analyze today's top financial news specifically focusing on Gold, Oil, and the S&P 500.
+    Provide a concise, 3-bullet point summary that is ready for a newsletter.
+    Tone: Professional, witty, and data-driven.
+    """
+
+    # 3. Generate the content using the 2026 Free Workhorse Model
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.1-flash-lite-preview",
+            contents=prompt
+        )
+        
+        # 4. Print the result (This shows up in your GitHub Action logs)
+        print("--- DAILY MARKET PULSE ---")
+        print(response.text)
+        return response.text
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    report = get_market_pulse()
-    print("--- TODAY'S PULSE ---")
-    print(report)
-    # Next step: Send this to Beehiiv/Email
+    get_market_pulse()
 
-import requests
-
-def publish_to_beehiiv(title, content_html):
-    """Publishes the AI report directly to your Beehiiv newsletter."""
-    
-    API_KEY = "YOUR_BEEHIIV_API_KEY"
-    PUB_ID = "YOUR_PUBLICATION_ID"
-    
-    url = f"https://api.beehiiv.com/v2/publications/{PUB_ID}/posts"
-    
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "title": title,
-        "subtitle": "Daily AI-Driven Market Pulse",
-        "content": content_html, # You can send raw HTML here
-        "publish_status": "draft", # Change to 'confirmed' to send immediately!
-        "send_email": True,
-        "display_on_web": True
-    }
-    
-    response = requests.post(url, json=payload, headers=headers)
-    
-    if response.status_code == 201:
-        print("🚀 Post created successfully on Beehiiv!")
-    else:
-        print(f"❌ Error: {response.status_code} - {response.text}")
