@@ -14,7 +14,7 @@ def get_market_pulse():
     context = "\n".join([f"- {a['title']}: {a['description']}" for a in articles])
     
     # 2. Use Gemini to analyze and write the "Pulse"
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.1-flash-lite')
     prompt = f"Analyze these news items for a gold investor. Write a 3-bullet executive summary (Trend, Risk, Action): \n\n{context}"
     
     report = model.generate_content(prompt)
