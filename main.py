@@ -1,22 +1,22 @@
 import os
-from google import genai  # Correct import for 2026 SDK
+from google.genai import Client  # Updated 2026 Import Path
 
 def get_market_pulse():
     # 1. Initialize the Gemini Client
     try:
-        # The new SDK looks for 'GOOGLE_API_KEY' or you can pass it manually
-        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        # The SDK will automatically try to find your 'GEMINI_API_KEY'
+        client = Client(api_key=os.environ.get("GEMINI_API_KEY"))
     except Exception as e:
         print(f"Auth Error: {e}")
         return
 
     # 2. Define your prompt
-    prompt = "Analyze today's top financial news for Gold and the S&P 500. Provide 3 witty bullet points."
+    prompt = "Analyze today's financial news for Gold and the S&P 500. Provide 3 witty bullet points."
 
-    # 3. Generate using the stable 2026 model
+    # 3. Generate content
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash", 
+            model="gemini-2.0-flash", 
             contents=prompt
         )
         
