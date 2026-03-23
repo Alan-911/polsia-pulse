@@ -1,47 +1,47 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 
-# 1. Setup API Keys
-try:
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    BEEHIIV_KEY = os.environ["BEEHIIV_API_KEY"]
-    PUB_ID = os.environ["BEEHIIV_PUBLICATION_ID"]
-except KeyError as e:
-    print(f"Error: Missing GitHub Secret {e}")
-    exit(1)
+# Pulling the 'Keys' to the business from GitHub Secrets
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+BEEHIIV_KEY = os.environ.get("BEEHIIV_API_KEY")
+PUB_ID = os.environ.get("BEEHIIV_PUBLICATION_ID")
 
-def get_ai_analysis():
-    # Stable 2026 model name
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    prompt = "Analyze today's Gold and S&P 500 news. 3 witty bullets for a newsletter."
+def run_polsia_pulse():
+    # 1. AI Analysis Phase (Using the modern 2026 client)
+    client = genai.Client(api_key=GEMINI_KEY)
+    prompt = "Analyze today's Gold and S&P 500 news. Provide 3 witty, professional bullets."
+    
     try:
-        response = model.generate_content(prompt)
-        print("--- AI ANALYSIS GENERATED ---")
-        return response.text
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        content = response.text
+        print("✅ AI Analysis Complete")
+        
+        # 2. Beehiiv Delivery Phase
+        url = f"https://api.beehiiv.com/v2/publications/{PUB_ID}/posts"
+        headers = {
+            "Authorization": f"Bearer {BEEHIIV_KEY}", 
+            "Content-Type": "application/json"
+        }
+        data = {
+            "title": "Daily Market Pulse",
+            "body_content": f"<p>{content}</p>",
+            "status": "draft"
+        }
+        
+        res = requests.post(url, headers=headers, json=data)
+        if res.status_code in [200, 201]:
+            print("🚀 Success! Draft created in Beehiiv.")
+        else:
+            print(f"❌ Beehiiv Error: {res.status_code} - {res.text}")
+            
     except Exception as e:
-        print(f"AI Error: {e}")
-        return None
-
-def send_to_beehiiv(content):
-    if not content: return
-    url = f"https://api.beehiiv.com/v2/publications/{PUB_ID}/posts"
-    headers = {
-        "Authorization": f"Bearer {BEEHIIV_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "title": "Daily Market Pulse",
-        "subtitle": "AI-Powered Market Insights",
-        "body_content": f"<h3>Today's Analysis:</h3><p>{content}</p>",
-        "status": "draft" 
-    }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code in [200, 201]:
-        print("Successfully created Beehiiv draft!")
-    else:
-        print(f"Beehiiv Error: {response.status_code} - {response.text}")
+        print(f"❌ System Error: {e}")
 
 if __name__ == "__main__":
-    analysis = get_ai_analysis()
-    send_to_beehiiv(analysis)
+    # Internal Debugger: Checks for missing Secrets before running
+    missing = [name for name, val in [("GEMINI_API_KEY", GEMINI_KEY), ("BEEHIIV_API_KEY", BEEHIIV_KEY), ("BEEHIIV_PUBLICATION_ID", PUB_ID)] if not val]
+    if missing:
+        print(f"CRITICAL: Missing Secrets in GitHub Settings: {', '.join(missing)}")
+    else:
+        run_polsia_pulse()
