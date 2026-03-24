@@ -2,17 +2,16 @@ name: Daily Pulse Analyst
 
 on:
   schedule:
-    - cron: '0 13 * * *' # 9:00 AM EST
-  workflow_dispatch: 
+    - cron: '0 13 * * *' # Runs at 9:00 AM EST (13:00 UTC)
+  workflow_dispatch:      # Allows manual "Run" button
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          path: '.'  # Forces everything into the root folder
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,13 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install google-genai requests
 
-     - name: Run Market Analysis
+      - name: Run Market Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BEEHIIV_API_KEY: ${{ secrets.BEEHIIV_API_KEY }}
           BEEHIIV_PUBLICATION_ID: ${{ secrets.BEEHIIV_PUBLICATION_ID }}
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
-        # This command finds the file first, then runs it
+        # This command finds dail-pulse.py anywhere in your repo and runs it
         run: |
-          FILE_PATH=$(find . -name "dail-pulse.py" | head -n 1)
-          python "$FILE_PATH"
+          SCRIPT_PATH=$(find . -name "dail-pulse.py" | head -n 1)
+          if [ -z "$SCRIPT_PATH" ]; then
+            echo "❌ ERROR: dail-pulse.py not found in the repository!"
+            exit 1
+          fi
+          echo "✅ Found script at: $SCRIPT_PATH"
+          python "$SCRIPT_PATH"
