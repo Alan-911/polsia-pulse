@@ -4,31 +4,32 @@ from google import genai
 
 def get_market_news():
     news_key = os.environ.get("NEWS_API_KEY")
-    # Fetching the last 24 hours of Gold and S&P news
+    # Fetching real headlines for Gold and S&P 500
     url = f"https://newsapi.org/v2/everything?q=Gold+AND+S%26P500&language=en&sortBy=publishedAt&apiKey={news_key}"
     try:
         res = requests.get(url).json()
         articles = res.get('articles', [])[:5]
         return "\n".join([f"- {a['title']}" for a in articles])
     except:
-        return "Market stability continues."
+        return "Market data remains stable today."
 
 def run_polsia():
-    # Credentials
+    # Secrets
     gem_key = os.environ.get("GEMINI_API_KEY")
     bee_key = os.environ.get("BEEHIIV_API_KEY")
     pub_id = os.environ.get("BEEHIIV_PUBLICATION_ID")
     
-    # Get Real News
+    # 1. Get News
     headlines = get_market_news()
 
+    # 2. AI Processing
     client = genai.Client(api_key=gem_key)
     try:
         prompt = f"Using these real headlines: {headlines}. Write 3 witty bullets for a newsletter."
         response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
         analysis = response.text
 
-        # Beehiiv Delivery
+        # 3. Beehiiv Post
         url = f"https://api.beehiiv.com/v2/publications/{pub_id}/posts"
         headers = {"Authorization": f"Bearer {bee_key}", "Content-Type": "application/json"}
         data = {
@@ -38,8 +39,8 @@ def run_polsia():
         }
         
         post_res = requests.post(url, headers=headers, json=data)
-        print(f"DEBUG: Beehiiv Code {post_res.status_code}")
-        print(f"DEBUG: Beehiiv Body {post_res.text}")
+        print(f"DEBUG: Beehiiv status code: {post_res.status_code}")
+        print(f"DEBUG: Beehiiv body: {post_res.text}")
 
     except Exception as e:
         print(f"❌ Error: {e}")
