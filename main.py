@@ -4,13 +4,16 @@ from google import genai
 
 def get_market_news():
     news_key = os.environ.get("NEWS_API_KEY")
+    # Using 'OR' query for better results
     url = f"https://newsapi.org/v2/everything?q=Gold+OR+S%26P500&language=en&sortBy=publishedAt&apiKey={news_key}"
     try:
         res = requests.get(url).json()
         articles = res.get('articles', [])[:5]
-        return "\n".join([f"- {a['title']}" for a in articles])
-    except:
-        return "Market data is currently stable."
+        headlines = "\n".join([f"- {a['title']}" for a in articles])
+        return headlines if headlines else "Markets are steady."
+    except Exception as e:
+        print(f"News Error: {e}")
+        return "Market data processing."
 
 def run_polsia():
     gem_key = os.environ.get("GEMINI_API_KEY")
@@ -21,7 +24,7 @@ def run_polsia():
     client = genai.Client(api_key=gem_key)
     
     try:
-        prompt = f"Using these headlines: {headlines}. Write 3 witty bullets for a newsletter."
+        prompt = f"Using these headlines:\n{headlines}\n\nWrite 3 witty, professional bullets for a financial newsletter draft."
         response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
         analysis = response.text
 
@@ -34,7 +37,7 @@ def run_polsia():
         }
         
         post_res = requests.post(url, headers=headers, json=data)
-        print(f"DEBUG: Status {post_res.status_code}")
+        print(f"DEBUG: Beehiiv Code {post_res.status_code}")
         print(f"DEBUG: Response {post_res.text}")
 
     except Exception as e:
